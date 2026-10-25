@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WeatherMY scene verification</title>
+<style>
+  body { margin: 0; background: #101c2a; font: 14px system-ui; color: white; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  form { position: relative; padding: 16px; display: flex; gap: 16px; align-items: center; background: #101c2acc; }
+  select { font: inherit; padding: 8px; }
+</style>
+<canvas id="sky" aria-label="Weather scene preview"></canvas>
+<form>
+  <label>Condition <select id="condition">
+    <option value="cloudy-night">Cloudy night</option>
+    <option value="sunny">Sunny</option>
+    <option value="clear-night">Clear night</option>
+    <option value="partly-cloudy">Partly cloudy</option>
+    <option value="rain">Rain</option>
+    <option value="rain-night">Rain at night</option>
+    <option value="thunderstorm-night">Thunderstorm</option>
+    <option value="fog">Fog</option>
+    <option value="">No data</option>
+  </select></label>
+  <label><input id="animate" type="checkbox" checked /> Animate</label>
+  <output id="status"></output>
+</form>
+<script type="module">
+  import { resolveWeatherScene } from '/src/lib/weatherScene.js'
+  import { createWeatherRenderer } from '/src/lib/weatherRenderer.js'
+  const canvas = document.querySelector('#sky')
+  const renderer = createWeatherRenderer(canvas)
+  const condition = document.querySelector('#condition')
+  const animate = document.querySelector('#animate')
+  function update() {
+    const scene = resolveWeatherScene({
+      weather_summary: { condition: condition.value },
+      widgets: { precipitation: { value: 8 }, 'wind-speed': { value: 16, additionalInfo: 'NW' } },
+      astronomy: { moon: { phase: .68 } },
+    }, Date.parse('2026-10-01T04:00:00Z'))
+    renderer.setScene(scene)
+    renderer.setMotion(animate.checked)
+    canvas.dataset.scene = scene.kind
+    canvas.dataset.night = scene.night
+    document.querySelector('#status').textContent = `${scene.kind} · ${scene.night ? 'night' : 'day'}`
+  }
+  condition.addEventListener('change', update)
+  animate.addEventListener('change', update)
+  window.addEventListener('resize', renderer.resize)
+  update()
+</script>
+</html>
